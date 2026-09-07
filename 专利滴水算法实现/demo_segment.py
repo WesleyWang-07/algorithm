@@ -52,7 +52,7 @@ def main():
         H, W = ink.shape
         print(f'\n{"-"*70}\n[合成谱字] H={H} W={W}  粘连: {tag}')
 
-        res = bidirectional_segment(ink, metric='D')
+        res = bidirectional_segment(ink, metric='A')
         l1, l2 = res['l1_path'], res['l2_path']
         xi, yi = res['intersect']
 
