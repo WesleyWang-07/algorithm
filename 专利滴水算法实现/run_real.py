@@ -9,8 +9,8 @@ import numpy as np
 from PIL import Image, ImageDraw
 from segment import bidirectional_segment
 
-GLYPHS = os.path.join(os.path.dirname(__file__), '..', '文献', 'glyphs')
-OUT = 'output_real'
+GLYPHS = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '文献', 'glyphs')
+OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'output_real')
 os.makedirs(OUT, exist_ok=True)
 
 

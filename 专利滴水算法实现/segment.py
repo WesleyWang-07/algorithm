@@ -17,7 +17,12 @@
     A: 熔断量最小   d
     B: 始末偏移最小 |x* - x°|
     C: 累计偏移最小 v
-    D: 融合指标最小 d + |x* - x°| + v     （论文结论 D 最优，默认使用）
+    D: 融合指标最小 d + |x* - x°| + v     （论文结论：集平均 D 最优）
+
+默认配置（2026-09 阶段三修复后）：l1（上下切分）按 D 选；l2（左右切分）按 B 选。
+依据：论文表3-1 / 图3-23——对带笔画粘连的谱字（论文"谱字B"），四种指标里只有 B
+（始末偏移最小化，即 l2 切得"直"）完成了上下、左右均正确的切分（A/C/D 均出现切分错误）；
+对不粘连的谱字A 四种指标均正确。合成图实测 B/C/D 选点一致、无回归（详见 验证报告.md）。
 """
 
 import numpy as np
@@ -49,7 +54,7 @@ def build_synthetic_character(H=160, W=220, connect_top=True):
     return ink
 
 
-def bidirectional_segment(ink, metric='D', seed=20241016):
+def bidirectional_segment(ink, metric='D', metric2='B', seed=None):
     """
     对二值谱字图像做双向切分。
     返回 dict：
@@ -58,12 +63,25 @@ def bidirectional_segment(ink, metric='D', seed=20241016):
         crops              : {'left_top','right_top','bottom'} 三张子图(ink 阵列)
         metrics1, metrics2 : 选中初始滴点的四指标
 
-    seed：传给水滴的 S102 遇阻随机取向随机源；固定默认值保证结果可复现。
+    参数
+    ----
+    metric  : l1（横向、上下切分）的选优指标，默认 'D'。
+    metric2 : l2（纵向、左右切分）的选优指标，默认 'B'（粘连谱字修正，见模块 docstring）。
+    seed    : None（默认）-> 枚举时关闭 S102 遇阻随机取向（k 恒 0）：同一候选的指标恒定、
+              候选之间可比，这是"枚举选优"能稳定复现零漂移解的前提；
+              传入整数 -> 开启随机取向，且每个候选用独立固定种子（seed+起点坐标），
+              同一 seed 下整体仍可复现。
+              注：S102 随机取向本身在滴水规则层（drop_improved / test_patent）照常可用，
+              这里只是编排层不再把随机性引入候选比较。
     """
-    if metric not in ('A', 'B', 'C', 'D'):
-        raise ValueError(f"metric 必须是 'A'/'B'/'C'/'D' 之一，收到 {metric!r}")
-    rng = np.random.default_rng(seed)
+    for name, mt in (('metric', metric), ('metric2', metric2)):
+        if mt not in ('A', 'B', 'C', 'D'):
+            raise ValueError(f"{name} 必须是 'A'/'B'/'C'/'D' 之一，收到 {mt!r}")
     H, W = ink.shape
+
+    def make_rng(pos):
+        """seed=None -> 确定性枚举（不取向）；否则该候选的独立固定随机源。"""
+        return None if seed is None else np.random.default_rng(seed + pos)
 
     # ---- 第一次切分 l1：横向（上下切分），起点左缘、行在中间带 ----
     # 论文: 上下切分初始滴点 δ1 ∈ (2/5 N, 3/5 N), N=高度(行数)
@@ -75,7 +93,7 @@ def bidirectional_segment(ink, metric='D', seed=20241016):
     for r0 in r_span:
         if not is_open(ink, r0, 0):
             continue
-        res = drop_improved(ink, r0, 0, g1, rng=rng)
+        res = drop_improved(ink, r0, 0, g1, rng=make_rng(r0))
         m = path_metrics(res, g1)
         score = m[metric]
         if best1 is None or score < best1[0]:
@@ -83,7 +101,7 @@ def bidirectional_segment(ink, metric='D', seed=20241016):
     if best1 is None:
         # 中间带入口全被墨迹挡住（黑边框/污渍）：回退带中点强制起步
         r0_best = (r_span[0] + r_span[-1]) // 2 if r_span else H // 2
-        res1 = drop_improved(ink, r0_best, 0, g1, rng=rng)
+        res1 = drop_improved(ink, r0_best, 0, g1, rng=make_rng(r0_best))
         m1 = path_metrics(res1, g1)
     else:
         _, r0_best, res1, m1 = best1
@@ -101,14 +119,14 @@ def bidirectional_segment(ink, metric='D', seed=20241016):
     for c0 in c_span:
         if not is_open(ink, 0, c0):
             continue
-        res = drop_improved(ink, 0, c0, g2, terminate_at=l1_set, rng=rng)
+        res = drop_improved(ink, 0, c0, g2, terminate_at=l1_set, rng=make_rng(c0))
         m = path_metrics(res, g2)
-        if best2 is None or m[metric] < best2[0]:
-            best2 = (m[metric], c0, res, m)
+        if best2 is None or m[metric2] < best2[0]:
+            best2 = (m[metric2], c0, res, m)
     if best2 is None:
         # 同 l1：上缘入口全被挡住时回退带中点
         c0_best = (c_span[0] + c_span[-1]) // 2 if c_span else W // 2
-        res2 = drop_improved(ink, 0, c0_best, g2, terminate_at=l1_set, rng=rng)
+        res2 = drop_improved(ink, 0, c0_best, g2, terminate_at=l1_set, rng=make_rng(c0_best))
         m2 = path_metrics(res2, g2)
     else:
         _, c0_best, res2, m2 = best2

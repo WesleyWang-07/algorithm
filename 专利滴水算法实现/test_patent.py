@@ -72,4 +72,9 @@ ok(Q == 0 and a[0] == 'melt' and (a[1], a[2]) == (3, 2), 'Q=0 全黑 -> 熔断(�
 _ink = make({5, 3, 7}); nb, Q, a = action(_ink, k=1)
 ok(Q < 0 and a[0] == 'reflow' and a[3] == -1, 'Q<0 k=1 仅左开 -> 回流 k=-1', 'reflow k=-1')
 
+# 图10 Q=1 (k=-1)：仅后左 n7 开 -> 飞溅(跳到后左对角) s+1
+_ink = make({7}); nb, Q, a = action(_ink, k=-1, s=0)
+ok(Q == 1 and a[0] == 'move' and (a[1], a[2]) == (1, 1) and a[4] == 1,
+   'Q=1 浅坑 s=0 -> 后左飞溅 s=1', 'move 到 (1,1), s=1')
+
 print('\n校验完成。')

@@ -48,6 +48,12 @@ ok(Q == 0 && a.act == "melt" && a.r == 3 && a.c == 2, 'Q=0 全黑 -> 熔断(向�
 a = action(make5([5, 3, 7]), 1, 0);
 ok(a.act == "reflow" && a.k == -1, 'Q<0 k=1 仅左开 -> 回流 k=-1', 'reflow k=-1');
 
+% 图10 Q=1 (k=-1)：仅后左 n7 开 -> 飞溅(跳到后左对角) s+1
+[j, Q] = q_decision(make5([7]), R0, C0, G, -1);
+a = action(make5([7]), -1, 0);
+ok(Q == 1 && a.act == "move" && a.r == 1 && a.c == 1 && a.s == 1, ...
+    'Q=1 浅坑 s=0 -> 后左飞溅 s=1', 'move 到 (1,1), s=1');
+
 fprintf('\n校验完成。\n');
 
 function a = action(ink, k, s)

@@ -47,7 +47,7 @@ def draw_path(img, path, color, width=3):
 
 
 def main():
-    out = 'output'
+    out = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'output')
     os.makedirs(out, exist_ok=True)    # 没有 output/ 文件夹就建一个；已有则跳过不报错
 
     print('=' * 70)                    # 纯装饰性的分隔线
@@ -62,8 +62,7 @@ def main():
         print(f'\n{"-"*70}\n[合成谱字] H={H} W={W}  粘连: {tag}')
 
         # ---------- 核心调用（第 3 步练习就是改这里的 metric） ----------
-        res = bidirectional_segment(ink, metric='A')
-        print(type(res), list(res.keys()))
+        res = bidirectional_segment(ink, metric='D')
         # res 是一个"结果包"，里面装着：
         #   l1_path：红色第一刀（横向，切上/下）的轨迹；l2_path：绿色第二刀（纵向，切左/右上）
         #   intersect：两刀交点 (xi, yi) —— 切分锚点
