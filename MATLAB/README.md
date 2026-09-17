@@ -61,7 +61,7 @@
 | --- | --- |
 | `demo_segment` | 合成谱字（粘连/无粘连）双向切分，输出 `output/overlay_*.png` 与三张子图 |
 | `run_real` | 论文真实谱字A 校验，输出 `output_real/`，结论见 `../专利滴水算法实现/验证报告.md` |
-| `test_patent` | 对照专利图4~图12 逐格断言决策表，期望 10 项全 PASS |
+| `test_patent` | 对照专利图4~图12 逐格断言决策表，期望 11 项全 PASS |
 | `test` | 400 组随机图 + 严苛粘连用例（有界/不越界属性断言） |
 
 ## 结果对比（MATLAB vs Python）
