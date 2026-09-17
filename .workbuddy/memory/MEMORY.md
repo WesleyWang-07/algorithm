@@ -21,6 +21,22 @@
    MATLAB 侧的 `metric2='B'` 早已同步，落后的是 README/CONTEXT 的文字。
 3. **弱证据必须配合正确的出处假设**（`p49_img4` 身份那次误判的教训）；
    像素级对齐在跨图场景不可行。
+4. **提交前先 `git status --porcelain` 分类**：本项目的暂存区极易积累 `AD`
+   （已暂存新增 + 工作区已删）条目——移动文件时若不 `git add -A` 收尾，
+   提交后等于"加了又删"，白提。**看到 `AD` 就先 `git reset` 再 `git add -A`。**
+   `.workbuddy/`、`.vscode/` 不在 `.gitignore` 里（用户选择照原样提交），
+   所以我生成的临时 `_*.txt` **必须自己清掉**，别被 `git add -A` 扫进去。
+
+## 本机环境坑（Windows）
+
+- **`Bash` 工具的 PATH 残缺**：`ls`/`cat`/`head`/`tail`/`wc`/`dirname` 全部
+  `command not found`，但 `cd` + 绝对路径调 Python 可用。定式：
+  `cd "路径" && "C:/Users/wzy/AppData/Local/Programs/Python/Python312/python.exe" -c "..."`
+- **`timeout` 命令会撞上 Windows 的 `timeout.exe`**（报"无效语法"），
+  改用 Bash 工具自身的 `timeout` 参数。
+- **`git update-ref refs/remotes/origin/main` 会静默失败**：本机 `.git/refs/remotes/origin/`
+  目录不存在时，它返回 0 但不落盘，导致 `git status` 一直显示 `[origin/main: gone]`。
+  **修法：先用 Python `os.makedirs` 建目录，再写 `main` 文件（内容为哈希 + 换行）。**
 
 ## 关键数字（实测，勿沿用旧文档）
 
