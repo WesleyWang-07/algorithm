@@ -46,6 +46,8 @@
   改用 Bash 工具自身的 `timeout` 参数。
 - **`git update-ref refs/remotes/origin/main` 会静默失败**：本机 `.git/refs/remotes/origin/`
   目录不存在时，它返回 0 但不落盘，导致 `git status` 一直显示 `[origin/main: gone]`。
+  **注意：`git push` 成功 ≠ 追踪引用已建立** —— push 输出正常、`git ls-remote origin` 也
+  已是新哈希，但 `git status -sb` 仍报 `gone`（2026-09-18 再次复现）。
   **修法：先用 Python `os.makedirs` 建目录，再写 `main` 文件（内容为哈希 + 换行）。**
 - **专利 PDF 是加密的**：`文献/20241016-发明-...pdf`（AESV2 / R=4），**密码 `stt`**。
   `pymupdf`：`d.authenticate('stt')` 返回 **2=owner / 1=user / 0=失败**，之后 `get_text()` 正常。
