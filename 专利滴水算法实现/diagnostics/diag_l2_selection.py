@@ -37,8 +37,12 @@ WHITE = 1
 
 def load_ink():
     p = os.path.join(GLYPHS, 'p49_img4.png')
-    img = Image.open(p).convert('L')
-    return np.array(img) < 128      # True = 墨迹
+    # ⚠️ 输入口径（2026-09-18 修正）：p49_img4.png 内**烤着论文自己的红线标注**
+    #    （247 个纯红像素，rows 94–184）。convert('L') 会把红线判成墨迹
+    #    （纯红 (255,0,0) 的 L=76<128），使 l1 贴着论文的红线走。
+    #    必须按 RGB 逐通道判定 —— 与 run_real.py / segment.py 的口径一致。
+    a = np.array(Image.open(p).convert('RGB')).astype(int)
+    return (a[..., 0] < 128) & (a[..., 1] < 128) & (a[..., 2] < 128)
 
 
 def run_l2(ink, l1_set, c0):

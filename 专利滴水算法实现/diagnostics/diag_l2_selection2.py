@@ -43,8 +43,10 @@ PAPER = {
 
 
 def load_ink():
-    img = Image.open(os.path.join(GLYPHS, 'p49_img4.png')).convert('L')
-    return np.array(img) < 128
+    # ⚠️ 输入口径（2026-09-18 修正）：见 diag_l2_selection.py 中的说明 ——
+    #    convert('L') 会把图内烤着的论文红线当成墨迹，必须按 RGB 逐通道判定。
+    a = np.array(Image.open(os.path.join(GLYPHS, 'p49_img4.png')).convert('RGB')).astype(int)
+    return (a[..., 0] < 128) & (a[..., 1] < 128) & (a[..., 2] < 128)
 
 
 def mid_col(path):

@@ -84,7 +84,10 @@ def bidirectional_segment(ink, metric='D', metric2='B', seed=None):
         return None if seed is None else np.random.default_rng(seed + pos)
 
     # ---- 第一次切分 l1：横向（上下切分），起点左缘、行在中间带 ----
-    # 论文: 上下切分初始滴点 δ1 ∈ (2/5 N, 3/5 N), N=高度(行数)
+    # 起点带 δ1 ∈ (2/5 N, 3/5 N)，N=高度（行数）。
+    # 注：此带出自**论文**，不是专利——专利权利要求 5 写的是全范围 x_o ∈ [0, M]。
+    #     实测全范围会退化到图像边缘（水滴走空白通道、四指标全 0 的平凡解），
+    #     故 δ 带是让切分有意义的必要约束。见 diagnostics/diag_fullwidth_vs_band.py。
     n1 = int(round(0.4 * H)); n2 = int(round(0.6 * H))
     r_span = list(range(max(1, n1), min(H - 1, n2)))
     # 固定 c0=0（左缘），枚举 r0
@@ -111,7 +114,11 @@ def bidirectional_segment(ink, metric='D', metric2='B', seed=None):
     l1_set = set(l1_path)
 
     # ---- 第二次切分 l2：纵向（左右切分），起点上缘、列在中间带 ----
-    # 论文: 左右切分初始滴点 δ2 ∈ (2/7 M, 3/5 M), M=宽度(列数，上方区域)
+    # 起点带 δ2 ∈ (2/7 M, 3/5 M)，M=宽度（列数，上方区域）。
+    # 注：此带出自**论文**（专利无 δ 概念，权利要求 5 写的是全范围）。
+    #     论文 3.3.1 只给原则"初始点位于图像中点附近"；**具体取值见论文 3.4.2
+    #     （五组范围对比实验，最终采用实验三 = 本行这个区间）**，本实现与之一致。
+    #     注：论文实验五 (2/9M, 7/9M) 才是"以中点为心的对称带"，已被论文否决。
     w1 = int(round(2 / 7 * W)); w2 = int(round(3 / 5 * W))
     c_span = list(range(max(1, w1), min(W - 1, w2)))
     g2 = (1, 0)
