@@ -2,11 +2,13 @@
 """
 汇报稿配图生成器（一键复跑）
 ============================
-生成 汇报/figs/ 下 3 张 PNG，供 汇报/项目汇报稿.md 引用。
+生成 汇报/figs/ 下 5 张 PNG，供 汇报/项目汇报稿.md 引用。
 
-图1 双向切分示意 + 真实谱字A 切分结果（左右双面板）
-图2 B 指标退化（左：B 单调 / 终点列恒定；右：选中列 ≡ 起点范围右边界）
-图3 邻点集消融（换论文规则改变不了结果）
+图1   双向切分示意 + 真实谱字A 切分结果（左右双面板）
+图2   B 指标退化（左：B 单调 / 终点列恒定；右：选中列 ≡ 起点范围右边界）
+图2a  吸引子示意（为什么终点不随起点变：带内起点都滑进同一条通道）
+图2b  起点范围 -> 选中列（四种范围，选中列都 = 各自右边界）
+图3   邻点集消融（换论文规则改变不了结果）
 
 ⚠️ 读图口径：必须用 RGB 逐通道 <128（run_real.load_ink）。
    p49_img4.png 内烤着论文自己的红线标注（纯红 R=255），
@@ -248,6 +250,97 @@ def fig2(info):
     plt.close(fig)
 
 
+# ---------------------------------------------------------------- 图2a
+def fig2a():
+    """吸引子示意：为什么终点列不随起点变。"""
+    fig, ax = plt.subplots(figsize=(9.6, 4.6))
+    ax.set_xlim(0, 10)
+    ax.set_ylim(0, 5.4)
+    ax.axis('off')
+    ax.set_title('吸引子：带内 [50,110] 的起点，终点列都恒为 111',
+                 fontsize=14.5, fontweight='bold', color=INK, pad=10)
+
+    ax.add_patch(FancyBboxPatch((0.5, 0.7), 9.0, 3.3,
+                                boxstyle='round,pad=0.1,rounding_size=0.3',
+                                fc=LGT, ec='#d8dade', lw=1.4))
+    ax.text(5.0, 0.34, '谱字A 的上半部（示意）', fontsize=11, color='#6b7078',
+            ha='center')
+
+    # 墨块（左部件 / 中间部件）
+    for (x, w, lab) in ((1.0, 2.6, '左部件的墨'), (5.3, 1.3, '中间的墨')):
+        ax.add_patch(FancyBboxPatch((x, 1.1), w, 2.0,
+                                    boxstyle='round,pad=0.04,rounding_size=0.14',
+                                    fc=INK, ec='none', alpha=0.86))
+        ax.text(x + w / 2, 0.82, lab, ha='center', va='top', fontsize=11,
+                color='#5a5f66')
+
+    # 干净通道（终点列 111）
+    ax.add_patch(FancyBboxPatch((7.6, 1.0), 0.55, 2.7,
+                                boxstyle='round,pad=0.03,rounding_size=0.1',
+                                fc='#cdebd9', ec=GRN, lw=1.2))
+    ax.text(7.88, 0.62, '通道：终点恒为列 111', ha='center', va='top',
+            fontsize=11, color=GRN, fontweight='bold')
+
+    # 起点 + 汇入通道的轨迹
+    starts = [(1.2, '52'), (3.0, '63'), (4.9, '77'), (6.6, '105')]
+    for x, lab in starts:
+        ax.plot([x], [4.72], marker='o', ms=9, color=BLU, zorder=5)
+        ax.text(x, 5.12, f'起点 {lab}', ha='center', va='bottom', fontsize=11,
+                color=BLU, fontweight='bold')
+        ax.annotate('', xy=(7.7, 2.6), xytext=(x, 4.55),
+                    arrowprops=dict(arrowstyle='-|>', color=BLU, lw=1.9,
+                                    connectionstyle='arc3,rad=-0.12',
+                                    alpha=0.85))
+    ax.text(9.35, 4.72, '终点相同\n=> B 与路径质量无关', ha='center', va='center',
+            fontsize=11, color='#6b7078', linespacing=1.5)
+
+    fig.tight_layout()
+    fig.savefig(os.path.join(OUT, 'fig2a_attractor.png'), dpi=190,
+                bbox_inches='tight')
+    plt.close(fig)
+
+
+# ---------------------------------------------------------------- 图2b
+def fig2b():
+    """四种起点范围，选中列都 = 各自右边界。"""
+    fig, ax = plt.subplots(figsize=(9.6, 4.0))
+    ax.set_xlim(62.0, 86.5)
+    ax.set_ylim(-0.7, 4.9)
+    ax.axis('off')
+    ax.set_title('换任何起点范围，选中列都 = 右边界（反向拟合的形态）',
+                 fontsize=14.5, fontweight='bold', color=INK, pad=10)
+
+    def X(c):        # 列号 -> 横坐标（恒等：列号即数据坐标）
+        return float(c)
+
+    ranges = [(72, 76), (71, 77), (70, 78), (69, 79)]
+    for i, (lo, hi) in enumerate(ranges):
+        y = 3.9 - i * 0.95
+        ax.add_patch(Rectangle((X(lo), y - 0.22), X(hi) - X(lo), 0.44,
+                               fc='#cfe2f3', ec='#9db8d9', lw=0.8))
+        ax.text(62.6, y, f'范围 [{lo},{hi}]', ha='left', va='center',
+                fontsize=12, color=INK)
+        ax.plot([X(hi)], [y], marker='o', ms=11, color=RED, zorder=5)
+        ax.text(X(hi) + 0.3, y, f'选中 {hi} = 右边界', ha='left', va='center',
+                fontsize=11.5, color=RED, fontweight='bold')
+
+    # 论文目标 77 的竖虚线
+    ax.plot([X(77), X(77)], [-0.35, 4.35], color=BLU, ls=(0, (5, 4)), lw=1.5)
+    ax.text(X(77), 4.5, '论文目标 列 77', ha='center', va='bottom',
+            fontsize=11.5, color=BLU, fontweight='bold')
+
+    # 底部列号刻度
+    for c in (69, 77, 84):
+        ax.plot([X(c)], [0.02], marker='|', ms=9, color=GRY)
+        ax.text(X(c), -0.45, f'列 {c}', ha='center', va='top', fontsize=11,
+                color='#6b7078')
+
+    fig.tight_layout()
+    fig.savefig(os.path.join(OUT, 'fig2b_band_right_edge.png'), dpi=190,
+                bbox_inches='tight')
+    plt.close(fig)
+
+
 # ---------------------------------------------------------------- 图3
 def fig3():
     fig, ax = plt.subplots(figsize=(7.4, 3.5))
@@ -284,6 +377,8 @@ if __name__ == '__main__':
     ink, info = measure()
     fig1(ink, info)
     fig2(info)
+    fig2a()
+    fig2b()
     fig3()
     print('\n[OK] 输出 ->', os.path.abspath(OUT))
     for f in sorted(os.listdir(OUT)):
