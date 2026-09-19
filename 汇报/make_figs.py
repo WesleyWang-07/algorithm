@@ -239,8 +239,8 @@ def fig2(info):
     axR.set_ylabel('列号', fontsize=12, color=INK)
     axR.grid(axis='y', alpha=0.25, ls=':')
     axR.legend(fontsize=10.5, loc='lower right', framealpha=0.95)
-    axR.set_title('② 选中列恒等于起点范围的右边界\n'
-                  '即「让锚点 = 77」= 把范围右边界画在 77（反向拟合）',
+    axR.set_title('② 起点范围落在同一条通道的流域内时\n'
+                  '选中列 = 该范围右边界（「让锚点 = 77」= 反向拟合）',
                   fontsize=13, fontweight='bold', color=INK, pad=10,
                   linespacing=1.5)
 
@@ -307,8 +307,10 @@ def fig2b():
     ax.set_xlim(62.0, 86.5)
     ax.set_ylim(-0.7, 4.9)
     ax.axis('off')
-    ax.set_title('换任何起点范围，选中列都 = 右边界（反向拟合的形态）',
-                 fontsize=14.5, fontweight='bold', color=INK, pad=10)
+    ax.set_title('起点范围落在同一条通道的流域内时，选中列 = 该范围右边界\n'
+                 '（前提：范围只覆盖一条通道；跨两条通道则不然，如谱字A [42,87] 选 46）',
+                 fontsize=13, fontweight='bold', color=INK, pad=10,
+                 linespacing=1.5)
 
     def X(c):        # 列号 -> 横坐标（恒等：列号即数据坐标）
         return float(c)
